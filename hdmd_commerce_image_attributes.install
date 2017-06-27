@@ -1,0 +1,9 @@
+<?php
+
+/**
+ * Implements hook_uninstall().
+ */
+function hdmd_commerce_image_attributes_uninstall() {
+  variable_del('hdmd_commerce_image_attributes_type');
+  variable_del('hdmd_commerce_image_attributes_field');
+}

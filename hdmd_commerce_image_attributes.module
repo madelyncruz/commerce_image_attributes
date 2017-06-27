@@ -1,0 +1,72 @@
+<?php
+
+/**
+ * Implements hook_permission().
+ */
+function hdmd_commerce_image_attributes_permission() { 
+  return array(
+    'administer hdmd image attributes' => array(
+      'title' => t('Administer HDMD Image Attributes'),
+      'description' => t('Ability to view the administrations page of HDMD Image Attributes.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function hdmd_commerce_image_attributes_menu() { 
+  return array(
+    'admin/commerce/hdmd-attributes-settings' => array(
+      'title' => t('HDMD Image Attributes Settings'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('hdmd_commerce_image_attributes_settings_form'),
+      'access callback' => TRUE,
+      'access arguments' => array('administer hdmd image attributes'),
+      'file' => 'includes/hdmd_commerce_image_settings.admin.inc',
+      'file path' => drupal_get_path('module', 'hdmd_commerce_image_attributes'),
+    )
+  );
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function hdmd_commerce_image_attributes_form_commerce_cart_add_to_cart_form_alter(&$form, &$form_state) {
+  if ($options = _get_product_options(array_flip($form['product_id']['#options']))) {
+    $form['product_id']['#type'] = 'radios';
+    $form['product_id']['#options'] = $options;
+  }
+}
+
+function _get_product_options($product_ids) {
+  $type = variable_get('hdmd_commerce_image_attributes_type');
+  $field_name = variable_get('hdmd_commerce_image_attributes_field');
+  
+  $query = db_select('commerce_product', 'p')
+          ->condition('p.type', $type)
+          ->condition('p.product_id', $product_ids, 'IN')
+          ->fields('p', array('title', 'product_id'));
+  
+  if (db_table_exists('field_data_' . $field_name)) {
+    $query->leftJoin('field_data_' . $field_name, 'f', 'f.entity_id = p.product_id');
+    $query->leftJoin('file_managed', 'fm', 'fm.fid = f.' . $field_name . '_fid');
+    $query->distinct('f.entity_id');
+    $query->fields('fm', array('uri'));
+  }
+  
+  $results = $query->execute()->fetchAll();
+  
+  foreach ($results as $result) {
+    $output = $result->title;
+    
+    if (isset($result->uri) && !empty($result->uri)) {
+      $output .= theme('image_style', array(
+            'path' => $result->uri, 'style_name' => 'thumbnail'));
+    }
+    
+    $options[$result->product_id] = $output;
+  }
+  
+  return isset($options) ? $options : array();
+}
