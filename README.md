@@ -1,0 +1,1 @@
+# hdmd_commerce_image_attributes
