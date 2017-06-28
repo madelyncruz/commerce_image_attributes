@@ -1,81 +1,79 @@
 <?php
 
 /**
- * Implements hook_action_info_alter().
- * 
- * @return $form
+ * Implements hook_permission().
  */
-function hdmd_commerce_image_attributes_settings_form($form, &$form_state) {
-  $form['settings'] = array(
-    '#type' => 'container',
-  );
-  $form['settings']['type'] = array(
-    '#type' => 'select',
-    '#title' => t('Product type'),
-    '#options' => _get_product_types_list(),
-    '#default_value' => variable_get('hdmd_commerce_image_attributes_type'),
-    '#ajax' => array(
-      'wrapper' => 'block-system-main > div > form',
-      'callback' => 'hdmd_commerce_image_attributes_settings_callback',
+function hdmd_commerce_image_attributes_permission() { 
+  return array(
+    'administer hdmd image attributes' => array(
+      'title' => t('Administer HDMD Image Attributes'),
+      'description' => t('Ability to view the administrations page of HDMD Image Attributes.'),
     ),
   );
-  
+}
+
+/**
+ * Implements hook_menu().
+ */
+function hdmd_commerce_image_attributes_menu() { 
+  return array(
+    'admin/commerce/hdmd-attributes-settings' => array(
+      'title' => t('HDMD Image Attributes Settings'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('hdmd_commerce_image_attributes_settings_form'),
+      'access callback' => TRUE,
+      'access arguments' => array('administer hdmd image attributes'),
+      'file' => 'includes/hdmd_commerce_image_settings.admin.inc',
+      'file path' => drupal_get_path('module', 'hdmd_commerce_image_attributes'),
+    )
+  );
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function hdmd_commerce_image_attributes_form_commerce_cart_add_to_cart_form_alter(&$form, &$form_state) {
+  if (isset($form['product_id']['#options']) && $options = _get_product_options(array_flip($form['product_id']['#options']))) {
+    $form['product_id']['#type'] = 'radios';
+    $form['product_id']['#options'] = $options;
+  }
+}
+
+function _get_product_options($product_ids) {
   $type = variable_get('hdmd_commerce_image_attributes_type');
-  if (isset($form_state['values']['type']) && !empty($form_state['values']['type'])) {
-    $type = $form_state['values']['type'];
+  $field_name = variable_get('hdmd_commerce_image_attributes_field');
+  
+  $query = db_select('commerce_product', 'p')
+          ->distinct()
+          ->condition('p.type', $type)
+          ->condition('p.product_id', $product_ids, 'IN')
+          ->fields('p', array('title', 'product_id'));
+  
+  if (db_table_exists('field_data_' . $field_name)) {
+    $query->leftJoin('field_data_' . $field_name, 'f', 'f.entity_id = p.product_id');
+    $query->leftJoin('file_managed', 'fm', 'fm.fid = f.' . $field_name . '_fid');
+    $query->distinct('f.entity_id');
+    $query->fields('fm', array('uri'));
+    $query->AddExpression('f.entity_id', 'entity_id');
   }
   
-  $form['settings']['field'] = array(
-    '#type' => 'select',
-    '#title' => t('Image Field'),
-    '#options' => _get_product_type_field($type),
-    '#default_value' => variable_get('hdmd_commerce_image_attributes_field'),
-    '#empty_option' => t('- Select -'),
-  );
+  $results = $query->execute()->fetchAll();
   
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration')
-  );
-  
-  return $form;
-}
-
-function hdmd_commerce_image_attributes_settings_form_submit($form, &$form_state) {
-  variable_set('hdmd_commerce_image_attributes_type', $form_state['values']['type']);
-  variable_set('hdmd_commerce_image_attributes_field', $form_state['values']['field']);
-  
-  drupal_set_message(t('The configuration options have been saved.'));
-}
-
-function hdmd_commerce_image_attributes_settings_callback(&$form, &$form_state) {
-  return $form;
-}
-
-function _get_product_types_list() {
-  $query = db_select('commerce_product_type', 't')
-          ->fields('t', array('type', 'name'))
-          ->orderBy('name', 'DESC')
-          ->range(0, 5);
-  $types = $query->execute()->fetchAll();
-  
-  foreach ($types as $type) {
-    $options[$type->type] = $type->name;
-  }
-  
-  return isset($options) ? $options : array();
-}
-
-function _get_product_type_field($type = NULL) {
-  $fields = field_info_instances('commerce_product', $type);
-  
-  foreach ($fields as $field) {
-    if (isset($field['widget']['module']) && $field['widget']['module'] != 'image') {
-      continue;
+  foreach ($results as $result) {
+    if (isset($result->uri) && !empty($result->uri)) {
+      $image_settings = array(
+          'path' => $result->uri,
+          'style_name' => 'thumbnail',
+          'attributes' => array('title' => $result->title
+        )
+      );
+      $output = theme('image_style', $image_settings);
     }
-    if (isset($field['field_name'])) {
-      $options[$field['field_name']] = t($field['label']);
+    else {
+      $output = $result->title;
     }
+    
+    $options[$result->product_id] = $output;
   }
   
   return isset($options) ? $options : array();
