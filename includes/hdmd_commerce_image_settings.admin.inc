@@ -70,7 +70,6 @@ function _get_product_options($product_ids) {
     else {
       $output = $result->title;
     }
-    
     $options[$result->product_id] = $output;
   }
   
