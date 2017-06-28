@@ -33,7 +33,7 @@ function hdmd_commerce_image_attributes_menu() {
  * Implements hook_form_alter().
  */
 function hdmd_commerce_image_attributes_form_commerce_cart_add_to_cart_form_alter(&$form, &$form_state) {
-  if ($options = _get_product_options(array_flip($form['product_id']['#options']))) {
+  if (isset($form['product_id']['#options']) && $options = _get_product_options(array_flip($form['product_id']['#options']))) {
     $form['product_id']['#type'] = 'radios';
     $form['product_id']['#options'] = $options;
   }
@@ -44,25 +44,33 @@ function _get_product_options($product_ids) {
   $field_name = variable_get('hdmd_commerce_image_attributes_field');
   
   $query = db_select('commerce_product', 'p')
+          ->distinct()
           ->condition('p.type', $type)
           ->condition('p.product_id', $product_ids, 'IN')
           ->fields('p', array('title', 'product_id'));
+          
   
   if (db_table_exists('field_data_' . $field_name)) {
     $query->leftJoin('field_data_' . $field_name, 'f', 'f.entity_id = p.product_id');
     $query->leftJoin('file_managed', 'fm', 'fm.fid = f.' . $field_name . '_fid');
     $query->distinct('f.entity_id');
     $query->fields('fm', array('uri'));
+    $query->AddExpression('f.entity_id', 'entity_id');
   }
   
   $results = $query->execute()->fetchAll();
   
   foreach ($results as $result) {
-    $output = $result->title;
-    
+    $output = '';
     if (isset($result->uri) && !empty($result->uri)) {
       $output .= theme('image_style', array(
-            'path' => $result->uri, 'style_name' => 'thumbnail'));
+            'path' => $result->uri,
+            'style_name' => 'thumbnail',
+            'attributes' => array('title' => $result->title))
+      );
+    }
+    else {
+      $output = $result->title;
     }
     
     $options[$result->product_id] = $output;

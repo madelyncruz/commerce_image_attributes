@@ -2,11 +2,12 @@
 
 /**
  * Implements hook_action_info_alter().
+ * 
+ * @return $form
  */
 function hdmd_commerce_image_attributes_settings_form($form, &$form_state) {
   $form['settings'] = array(
     '#type' => 'container',
-    '#id' => 'hdmd-image-settings'
   );
   $form['settings']['type'] = array(
     '#type' => 'select',
