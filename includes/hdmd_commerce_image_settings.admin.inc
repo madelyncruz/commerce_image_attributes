@@ -44,7 +44,6 @@ function _get_product_options($product_ids) {
   $field_name = variable_get('hdmd_commerce_image_attributes_field');
   
   $query = db_select('commerce_product', 'p')
-          ->distinct()
           ->condition('p.type', $type)
           ->condition('p.product_id', $product_ids, 'IN')
           ->fields('p', array('title', 'product_id'));
@@ -52,9 +51,8 @@ function _get_product_options($product_ids) {
   if (db_table_exists('field_data_' . $field_name)) {
     $query->leftJoin('field_data_' . $field_name, 'f', 'f.entity_id = p.product_id');
     $query->leftJoin('file_managed', 'fm', 'fm.fid = f.' . $field_name . '_fid');
-    $query->distinct('f.entity_id');
     $query->fields('fm', array('uri'));
-    $query->AddExpression('f.entity_id', 'entity_id');
+    $query->groupBy('p.product_id');
   }
   
   $results = $query->execute()->fetchAll();
