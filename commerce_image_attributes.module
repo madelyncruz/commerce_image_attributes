@@ -17,13 +17,13 @@ function commerce_image_attributes_permission() {
  */
 function commerce_image_attributes_menu() { 
   return array(
-    'admin/commerce/commerce-image-attributes-settings' => array(
+    'admin/commerce/config/commerce-image-attributes-settings' => array(
       'title' => t('Commerce Image Attributes Settings'),
       'page callback' => 'drupal_get_form',
       'page arguments' => array('commerce_image_attributes_settings_form'),
       'access callback' => TRUE,
       'access arguments' => array('administer commerce image attributes'),
-      'file' => 'includes/hdmd_commerce_image_settings.admin.inc',
+      'file' => 'includes/commerce_image_attributes_settings.admin.inc',
       'file path' => drupal_get_path('module', 'commerce_image_attributes'),
     )
   );
@@ -60,7 +60,7 @@ function _get_commerce_product_list($product_ids) {
 
 function _commerce_product_field_image_options($product_ids) {
   $results = _get_commerce_product_list($product_ids);
-  
+
   foreach ($results as $result) {
     $output = $result->title;
 

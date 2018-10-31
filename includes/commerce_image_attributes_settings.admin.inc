@@ -14,6 +14,7 @@ function commerce_image_attributes_settings_form($form, &$form_state) {
     '#title' => t('Product type'),
     '#options' => _get_commerce_product_types_options(),
     '#default_value' => variable_get('commerce_image_attributes_type'),
+    '#empty_option' => t('- Select -'),
     '#ajax' => array(
       'wrapper' => 'block-system-main > div > form',
       'callback' => 'commerce_image_attributes_settings_callback',
@@ -31,7 +32,7 @@ function commerce_image_attributes_settings_form($form, &$form_state) {
     '#title' => t('Image Field'),
     '#options' => _get_commerce_product_type_field_options($type),
     '#default_value' => variable_get('commerce_image_attributes_field'),
-    '#empty_option' => t('- Select -'),
+    '#empty_option' => t('- Select -')
   );
   
   $form['submit'] = array(

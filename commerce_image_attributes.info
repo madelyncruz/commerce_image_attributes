@@ -5,4 +5,4 @@ core = 7.x
 dependencies[] = commerce
 dependencies[] = commerce_product_ui
 
-configure = admin/commerce/commerce-image-attributes-settings
+configure = admin/commerce/config/commerce-image-attributes-settings
