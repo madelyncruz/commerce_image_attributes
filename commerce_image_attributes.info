@@ -1,8 +1,8 @@
-name = HDMD Commerce Image Attributes
+name = Commerce Image Attributes
 description = Set product image as attributes.
-package = HDMD
 core = 7.x
 
+dependencies[] = commerce
 dependencies[] = commerce_product_ui
 
-configure = admin/commerce/hdmd-attributes-settings
+configure = admin/commerce/commerce-image-attributes-settings
