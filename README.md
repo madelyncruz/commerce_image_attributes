@@ -1,1 +1,1 @@
-# hdmd_commerce_image_attributes
+# Commerce Image Attributes
